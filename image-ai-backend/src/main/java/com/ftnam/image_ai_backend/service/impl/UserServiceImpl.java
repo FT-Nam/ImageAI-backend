@@ -1,5 +1,6 @@
 package com.ftnam.image_ai_backend.service.impl;
 
+import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
 import com.ftnam.image_ai_backend.dto.request.UserCreationRequest;
 import com.ftnam.image_ai_backend.dto.request.UserUpdateRequest;
 import com.ftnam.image_ai_backend.dto.response.UserResponse;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,7 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+    KafkaTemplate<String,Object> kafkaTemplate;
 
     int creditInitial = 200;
 
@@ -49,6 +52,15 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()-> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
         user.setRoles(Set.of(role));
+
+        NotificationEvent notificationEvent = NotificationEvent.builder()
+                .channel("EMAIL")
+                .recipient(request.getEmail())
+                .subject("Welcome to ImageAI")
+                .body("Hello" + request.getName())
+                .build();
+
+        kafkaTemplate.send("notification-delivery", notificationEvent);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
