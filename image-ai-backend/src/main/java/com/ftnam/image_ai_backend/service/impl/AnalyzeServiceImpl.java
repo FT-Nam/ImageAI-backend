@@ -5,7 +5,7 @@ import com.ftnam.image_ai_backend.dto.response.AnalyzeResponse;
 import com.ftnam.image_ai_backend.entity.User;
 import com.ftnam.image_ai_backend.exception.AppException;
 import com.ftnam.image_ai_backend.exception.ErrorCode;
-import com.ftnam.image_ai_backend.repository.PythonServiceClient;
+import com.ftnam.image_ai_backend.repository.httpclient.PythonServiceClient;
 import com.ftnam.image_ai_backend.repository.UserRepository;
 import com.ftnam.image_ai_backend.service.AnalyzeService;
 import lombok.AccessLevel;
