@@ -1,0 +1,154 @@
+.sidebar {
+  width: 250px;
+  background: #333;
+  overflow: hidden;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  top: 0;
+
+  &.hidden {
+    transform: translateX(-100%);
+    position: absolute;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(85, 85, 85, 0.1);
+    border-radius: 10px;
+
+    &:hover {
+      background: rgba(85, 85, 85, 0.2);
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.sidebar-buttons {
+  display: flex;
+  gap: 130px;
+  margin-bottom: 10px;
+
+  button {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 4px;
+
+    img {
+      width: 25px;
+      height: 30px;
+    }
+  }
+}
+
+.history-section {
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 100px);
+  padding-right: 10px;
+}
+
+.history-category {
+  margin-bottom: 20px;
+
+  h3 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+  }
+
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 17px;
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 10px;
+  color: #f9f9f9;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover,
+  &.open,
+  &.selected-item {
+    background-color: #4f4f4f;
+  }
+
+  .menu-container {
+    position: relative;
+  }
+
+  .menu-button {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 5px;
+
+    img {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &:hover .menu-button,
+  &.open .menu-button {
+    display: flex;
+  }
+
+  .menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    min-width: 100px;
+
+    &.hidden {
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 12px;
+      text-align: left;
+      border: none;
+      background: none;
+      color: #333;
+      cursor: pointer;
+      font-size: 14px;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+  }
+} 
