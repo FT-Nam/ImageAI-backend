@@ -25,9 +25,9 @@ public class NotificationController {
     public void listenNotificationDelivery(NotificationEvent message){
         log.info("Message received: {}", message);
         emailService.sendEmail(SendEmailRequest.builder()
-                        .to(List.of(Recipient.builder()
+                        .to(Recipient.builder()
                                 .email(message.getRecipient())
-                                .build()))
+                                .build())
                         .subject(message.getSubject())
                         .htmlContent(message.getBody())
                 .build());

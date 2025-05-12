@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
                 .channel("EMAIL")
                 .recipient(request.getEmail())
                 .subject("Welcome to ImageAI")
-                .body("Hello" + request.getName())
+                .body("Hello, " + request.getName())
                 .build();
 
         kafkaTemplate.send("notification-delivery", notificationEvent);

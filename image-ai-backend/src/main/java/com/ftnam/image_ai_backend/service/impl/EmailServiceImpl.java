@@ -16,6 +16,8 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -33,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
                         .email("ptnam1672003@gmail.com")
                         .name("imageai")
                         .build())
-                .to(request.getTo())
+                .to(List.of(request.getTo()))
                 .htmlContent(request.getHtmlContent())
                 .subject(request.getSubject())
                 .build();

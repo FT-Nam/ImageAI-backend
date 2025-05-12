@@ -3,8 +3,7 @@ package com.ftnam.image_ai_backend.dto.request.email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
