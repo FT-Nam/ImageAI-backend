@@ -56,11 +56,18 @@ public class UserServiceImpl implements UserService {
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .channel("EMAIL")
                 .recipient(request.getEmail())
-                .subject("Welcome to ImageAI")
-                .body("Hello, " + request.getName())
+                .subject("🎉 Chào mừng đến với ImageAI!")
+                .body("Xin chào " + request.getName() + ",<br><br>"
+                        + "Cảm ơn bạn đã đăng ký tài khoản tại ImageAI! 🎉<br><br>"
+                        + "Chúng tôi rất vui được đồng hành cùng bạn trong hành trình khám phá sức mạnh của trí tuệ nhân tạo trong xử lý hình ảnh.<br><br>"
+                        + "Nếu bạn có bất kỳ câu hỏi nào hoặc cần hỗ trợ, đừng ngần ngại liên hệ với chúng tôi.<br><br>"
+                        + "Chúc bạn có trải nghiệm tuyệt vời cùng ImageAI!<br><br>"
+                        + "Trân trọng,<br>"
+                        + "Đội ngũ ImageAI")
                 .build();
 
-        kafkaTemplate.send("notification-delivery", notificationEvent);
+
+        kafkaTemplate.send("email-delivery", notificationEvent);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }

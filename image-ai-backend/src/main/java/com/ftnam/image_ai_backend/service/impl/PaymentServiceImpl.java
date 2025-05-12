@@ -1,6 +1,7 @@
 package com.ftnam.image_ai_backend.service.impl;
 
 import com.ftnam.image_ai_backend.configuration.VnPayConfig;
+import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
 import com.ftnam.image_ai_backend.dto.request.PaymentRequest;
 import com.ftnam.image_ai_backend.dto.response.PaymentReturnResponse;
 import com.ftnam.image_ai_backend.dto.response.PaymentCallbackResponse;
@@ -21,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +42,9 @@ public class PaymentServiceImpl implements PaymentService {
     UserRepository userRepository;
     OrderRepository orderRepository;
     PlanInfoRepository planInfoRepository;
+
+    KafkaTemplate<String,Object> kafkaTemplate;
+
 
     @Override
     public String createPayment(PaymentRequest request, HttpServletRequest httpServletRequest) throws UnsupportedEncodingException {
@@ -301,6 +306,23 @@ public class PaymentServiceImpl implements PaymentService {
 
                 userRepository.save(user);
                 orderRepository.save(order);
+
+                NotificationEvent notificationEvent = NotificationEvent.builder()
+                        .channel("EMAIL")
+                        .recipient(user.getEmail())
+                        .subject("✅ Thanh toán thành công – Gói " + user.getSubscription())
+                        .body("Xin chào " + user.getName() + ",<br><br>"
+                                + "Chúc mừng! Bạn đã thanh toán thành công cho gói dịch vụ **" + user.getSubscription() + "** tại ImageAI. 🎉<br>"
+                                + "Bạn hiện đã có quyền truy cập đầy đủ vào các tính năng nâng cao và tiện ích của chúng tôi.<br><br>"
+                                + "Hãy khám phá và trải nghiệm sức mạnh của trí tuệ nhân tạo ngay hôm nay!<br><br>"
+                                + "Nếu bạn cần hỗ trợ trong quá trình sử dụng, đừng ngần ngại liên hệ với đội ngũ của chúng tôi.<br><br>"
+                                + "Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của ImageAI.<br><br>"
+                                + "Trân trọng,<br>"
+                                + "Đội ngũ ImageAI")
+                        .build();
+
+                kafkaTemplate.send("email-delivery", notificationEvent);
+
 
                 return PaymentReturnResponse.builder()
                         .success(true)
