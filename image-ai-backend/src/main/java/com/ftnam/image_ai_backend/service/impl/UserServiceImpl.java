@@ -10,13 +10,14 @@ import com.ftnam.image_ai_backend.enums.SubscriptionPlan;
 import com.ftnam.image_ai_backend.exception.AppException;
 import com.ftnam.image_ai_backend.exception.ErrorCode;
 import com.ftnam.image_ai_backend.mapper.UserMapper;
-import com.ftnam.image_ai_backend.repository.HistoryRepository;
 import com.ftnam.image_ai_backend.repository.RoleRepository;
 import com.ftnam.image_ai_backend.repository.UserRepository;
 import com.ftnam.image_ai_backend.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -24,8 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -37,6 +37,10 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     KafkaTemplate<String,Object> kafkaTemplate;
+
+    @Value("${brevo.api-key}")
+    @NonFinal
+    String apiKey;
 
     int creditInitial = 200;
 
@@ -56,14 +60,8 @@ public class UserServiceImpl implements UserService {
         NotificationEvent notificationEvent = NotificationEvent.builder()
                 .channel("EMAIL")
                 .recipient(request.getEmail())
-                .subject("🎉 Chào mừng đến với ImageAI!")
-                .body("Xin chào " + request.getName() + ",<br><br>"
-                        + "Cảm ơn bạn đã đăng ký tài khoản tại ImageAI! 🎉<br><br>"
-                        + "Chúng tôi rất vui được đồng hành cùng bạn trong hành trình khám phá sức mạnh của trí tuệ nhân tạo trong xử lý hình ảnh.<br><br>"
-                        + "Nếu bạn có bất kỳ câu hỏi nào hoặc cần hỗ trợ, đừng ngần ngại liên hệ với chúng tôi.<br><br>"
-                        + "Chúc bạn có trải nghiệm tuyệt vời cùng ImageAI!<br><br>"
-                        + "Trân trọng,<br>"
-                        + "Đội ngũ ImageAI")
+                .templateId(1)
+                .params(Map.of("name", request.getName()))
                 .build();
 
 

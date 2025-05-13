@@ -1,5 +1,6 @@
 package com.ftnam.image_ai_backend.dto.request.email;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

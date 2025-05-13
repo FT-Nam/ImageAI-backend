@@ -36,8 +36,8 @@ public class EmailServiceImpl implements EmailService {
                         .name("imageai")
                         .build())
                 .to(List.of(request.getTo()))
-                .htmlContent(request.getHtmlContent())
-                .subject(request.getSubject())
+                .templateId(request.getTemplateId())
+                .params(request.getParams())
                 .build();
 
         try {

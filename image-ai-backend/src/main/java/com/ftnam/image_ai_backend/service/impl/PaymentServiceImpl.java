@@ -310,15 +310,11 @@ public class PaymentServiceImpl implements PaymentService {
                 NotificationEvent notificationEvent = NotificationEvent.builder()
                         .channel("EMAIL")
                         .recipient(user.getEmail())
-                        .subject("✅ Thanh toán thành công – Gói " + user.getSubscription())
-                        .body("Xin chào " + user.getName() + ",<br><br>"
-                                + "Chúc mừng! Bạn đã thanh toán thành công cho gói dịch vụ **" + user.getSubscription() + "** tại ImageAI. 🎉<br>"
-                                + "Bạn hiện đã có quyền truy cập đầy đủ vào các tính năng nâng cao và tiện ích của chúng tôi.<br><br>"
-                                + "Hãy khám phá và trải nghiệm sức mạnh của trí tuệ nhân tạo ngay hôm nay!<br><br>"
-                                + "Nếu bạn cần hỗ trợ trong quá trình sử dụng, đừng ngần ngại liên hệ với đội ngũ của chúng tôi.<br><br>"
-                                + "Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của ImageAI.<br><br>"
-                                + "Trân trọng,<br>"
-                                + "Đội ngũ ImageAI")
+                        .templateId(2)
+                        .params(Map.of(
+                                "name", user.getName()
+                                ,"subscription", user.getSubscription().toString()
+                        ))
                         .build();
 
                 kafkaTemplate.send("email-delivery", notificationEvent);

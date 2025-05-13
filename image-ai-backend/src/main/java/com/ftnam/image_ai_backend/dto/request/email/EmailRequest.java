@@ -1,26 +1,29 @@
 package com.ftnam.image_ai_backend.dto.request.email;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EmailRequest {
-    @JsonProperty("sender")
     Sender sender;
 
-    @JsonProperty("to")
     List<Recipient> to;
 
-    @JsonProperty("subject")
     String subject;
 
-    @JsonProperty("htmlContent")
     String htmlContent;
+
+    int templateId;
+
+    Map<String, String> params;
 }

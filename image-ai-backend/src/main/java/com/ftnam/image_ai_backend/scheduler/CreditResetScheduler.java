@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -48,15 +49,11 @@ public class CreditResetScheduler {
                 NotificationEvent notificationEvent = NotificationEvent.builder()
                         .channel("EMAIL")
                         .recipient(user.getEmail())
-                        .subject("⚠️ Gói dịch vụ của bạn đã hết hạn")
-                        .body("Xin chào " + user.getName() + ",<br><br>"
-                                + "Chúng tôi xin thông báo rằng gói dịch vụ <strong>" + user.getSubscription() + "</strong> của bạn tại ImageAI đã <strong>hết hạn</strong>.<br><br>"
-                                + "Hiện tại, tài khoản của bạn đã tạm thời bị hạn chế một số tính năng nâng cao.<br><br>"
-                                + "Để tiếp tục sử dụng đầy đủ các chức năng, vui lòng gia hạn gói dịch vụ của bạn.<br><br>"
-                                + "👉 <a href=\"https://imageai.vn/renew\">Nhấn vào đây để gia hạn</a><br><br>"
-                                + "Nếu bạn cần hỗ trợ, đừng ngần ngại liên hệ với đội ngũ của chúng tôi.<br><br>"
-                                + "Trân trọng,<br>"
-                                + "Đội ngũ ImageAI")
+                        .templateId(3)
+                        .params(Map.of(
+                                "subscription", user.getSubscription().toString(),
+                                "name", user.getName()
+                        ))
                         .build();
 
 

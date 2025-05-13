@@ -3,7 +3,7 @@ package com.ftnam.image_ai_backend.dto.request.email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -14,4 +14,6 @@ public class SendEmailRequest {
     Recipient to;
     String htmlContent;
     String subject;
+    Map<String,String> params;
+    int templateId;
 }
