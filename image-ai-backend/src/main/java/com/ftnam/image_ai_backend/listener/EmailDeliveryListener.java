@@ -1,6 +1,6 @@
 package com.ftnam.image_ai_backend.listener;
 
-import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
+import com.ftnam.image_ai_backend.dto.event.EmailEvent;
 import com.ftnam.image_ai_backend.dto.request.email.Recipient;
 import com.ftnam.image_ai_backend.dto.request.email.SendEmailRequest;
 import com.ftnam.image_ai_backend.service.impl.EmailServiceImpl;
@@ -20,7 +20,7 @@ public class EmailDeliveryListener {
     EmailServiceImpl emailService;
 
     @KafkaListener(topics = "email-delivery")
-    public void handleEmailDelivery(NotificationEvent message){
+    public void handleEmailDelivery(EmailEvent message){
         log.info("Message received: {}", message);
         emailService.sendEmail(SendEmailRequest.builder()
                         .to(Recipient.builder()

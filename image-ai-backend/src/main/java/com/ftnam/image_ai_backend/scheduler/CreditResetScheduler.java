@@ -1,6 +1,6 @@
 package com.ftnam.image_ai_backend.scheduler;
 
-import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
+import com.ftnam.image_ai_backend.dto.event.EmailEvent;
 import com.ftnam.image_ai_backend.entity.PlanInfo;
 import com.ftnam.image_ai_backend.entity.User;
 import com.ftnam.image_ai_backend.enums.SubscriptionPlan;
@@ -46,7 +46,7 @@ public class CreditResetScheduler {
                 user.setCreditResetAt(LocalDateTime.now());
                 changed = true;
 
-                NotificationEvent notificationEvent = NotificationEvent.builder()
+                EmailEvent emailEvent = EmailEvent.builder()
                         .channel("EMAIL")
                         .recipient(user.getEmail())
                         .templateId(3)
@@ -57,7 +57,7 @@ public class CreditResetScheduler {
                         .build();
 
 
-                kafkaTemplate.send("email-delivery", notificationEvent);
+                kafkaTemplate.send("email-delivery", emailEvent);
 
                 log.info("Subscription plan of user {} expired,reset free plan", user.getEmail());
             }

@@ -1,5 +1,6 @@
 package com.ftnam.image_ai_backend.service.impl;
 
+import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
 import com.ftnam.image_ai_backend.dto.request.HistoryRequest;
 import com.ftnam.image_ai_backend.dto.response.AnalyzeResponse;
 import com.ftnam.image_ai_backend.entity.User;
@@ -11,6 +12,7 @@ import com.ftnam.image_ai_backend.service.AnalyzeService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ public class AnalyzeServiceImpl implements AnalyzeService {
     HistoryServiceImpl historyService;
     PythonServiceClient pythonServiceClient;
     UserRepository userRepository;
+    KafkaTemplate<String,Object> kafkaTemplate;
+
 
     @Override
     public AnalyzeResponse analyzeImage(MultipartFile file) throws IOException {
@@ -55,6 +59,13 @@ public class AnalyzeServiceImpl implements AnalyzeService {
                     .description(predict.getDescription())
                     .userId(userId)
                     .build();
+
+            NotificationEvent notificationEvent = NotificationEvent.builder()
+                    .content("Analyze image has been successfully")
+                    .userId(userId)
+                    .build();
+
+            kafkaTemplate.send("notification-delivery", notificationEvent);
 
             historyService.createHistory(historyRequest);
         }

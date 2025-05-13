@@ -1,6 +1,6 @@
 package com.ftnam.image_ai_backend.service.impl;
 
-import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
+import com.ftnam.image_ai_backend.dto.event.EmailEvent;
 import com.ftnam.image_ai_backend.dto.request.UserCreationRequest;
 import com.ftnam.image_ai_backend.dto.request.UserUpdateRequest;
 import com.ftnam.image_ai_backend.dto.response.UserResponse;
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(Set.of(role));
 
-        NotificationEvent notificationEvent = NotificationEvent.builder()
+        EmailEvent emailEvent = EmailEvent.builder()
                 .channel("EMAIL")
                 .recipient(request.getEmail())
                 .templateId(1)
@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
                 .build();
 
 
-        kafkaTemplate.send("email-delivery", notificationEvent);
+        kafkaTemplate.send("email-delivery", emailEvent);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }

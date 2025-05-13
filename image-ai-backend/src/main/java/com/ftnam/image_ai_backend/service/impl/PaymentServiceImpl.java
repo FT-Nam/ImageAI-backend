@@ -1,10 +1,9 @@
 package com.ftnam.image_ai_backend.service.impl;
 
 import com.ftnam.image_ai_backend.configuration.VnPayConfig;
-import com.ftnam.image_ai_backend.dto.event.NotificationEvent;
+import com.ftnam.image_ai_backend.dto.event.EmailEvent;
 import com.ftnam.image_ai_backend.dto.request.PaymentRequest;
 import com.ftnam.image_ai_backend.dto.response.PaymentReturnResponse;
-import com.ftnam.image_ai_backend.dto.response.PaymentCallbackResponse;
 import com.ftnam.image_ai_backend.entity.Order;
 import com.ftnam.image_ai_backend.entity.PlanInfo;
 import com.ftnam.image_ai_backend.entity.User;
@@ -17,7 +16,6 @@ import com.ftnam.image_ai_backend.repository.PlanInfoRepository;
 import com.ftnam.image_ai_backend.repository.UserRepository;
 import com.ftnam.image_ai_backend.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -307,7 +305,7 @@ public class PaymentServiceImpl implements PaymentService {
                 userRepository.save(user);
                 orderRepository.save(order);
 
-                NotificationEvent notificationEvent = NotificationEvent.builder()
+                EmailEvent emailEvent = EmailEvent.builder()
                         .channel("EMAIL")
                         .recipient(user.getEmail())
                         .templateId(2)
@@ -317,7 +315,7 @@ public class PaymentServiceImpl implements PaymentService {
                         ))
                         .build();
 
-                kafkaTemplate.send("email-delivery", notificationEvent);
+                kafkaTemplate.send("email-delivery", emailEvent);
 
 
                 return PaymentReturnResponse.builder()
