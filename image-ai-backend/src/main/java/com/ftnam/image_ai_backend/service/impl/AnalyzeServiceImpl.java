@@ -28,6 +28,7 @@ public class AnalyzeServiceImpl implements AnalyzeService {
     HistoryServiceImpl historyService;
     PythonServiceClient pythonServiceClient;
     UserRepository userRepository;
+    NotificationPublisher notificationPublisher;
     KafkaTemplate<String,Object> kafkaTemplate;
 
 
@@ -47,6 +48,8 @@ public class AnalyzeServiceImpl implements AnalyzeService {
                     .orElseThrow(()-> new AppException(ErrorCode.USER_NOT_EXISTED));
 
             if(user.getCredit() < 20){
+                notificationPublisher.sendNotification(userId, "Insufficient credits to analyze image");
+
                 throw new AppException(ErrorCode.NOT_ENOUGH_CREDITS);
             }
 
@@ -60,12 +63,7 @@ public class AnalyzeServiceImpl implements AnalyzeService {
                     .userId(userId)
                     .build();
 
-            NotificationEvent notificationEvent = NotificationEvent.builder()
-                    .content("Analyze image has been successfully")
-                    .userId(userId)
-                    .build();
-
-            kafkaTemplate.send("notification-delivery", notificationEvent);
+            notificationPublisher.sendNotification(userId, "Analyze image has been successfully");
 
             historyService.createHistory(historyRequest);
         }
@@ -77,4 +75,5 @@ public class AnalyzeServiceImpl implements AnalyzeService {
                 .prediction(predict.getPrediction())
                 .build();
     }
+
 }

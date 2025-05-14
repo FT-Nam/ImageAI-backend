@@ -10,6 +10,7 @@ import com.ftnam.image_ai_backend.mapper.NotificationMapper;
 import com.ftnam.image_ai_backend.repository.NotificationRepository;
 import com.ftnam.image_ai_backend.repository.UserRepository;
 import com.ftnam.image_ai_backend.service.NotificationService;
+import com.ftnam.image_ai_backend.websocket.NotificationWebSocketPublisher;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
     NotificationMapper notificationMapper;
     NotificationRepository notificationRepository;
     UserRepository userRepository;
+    NotificationWebSocketPublisher notificationWebSocketPublisher;
 
 
     @Override
@@ -46,7 +48,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         notification.setUser(user);
 
-        return notificationMapper.toNotificationResponse(notificationRepository.save(notification));
+        Notification savedNotification = notificationRepository.save(notification);
+
+        notificationWebSocketPublisher
+                .sendNotificationToUser(user.getId(), notificationMapper.toNotificationResponse(savedNotification));
+
+        return notificationMapper.toNotificationResponse(savedNotification);
     }
 
     @Override

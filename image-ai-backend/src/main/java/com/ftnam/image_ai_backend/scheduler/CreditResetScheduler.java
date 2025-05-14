@@ -8,6 +8,7 @@ import com.ftnam.image_ai_backend.exception.AppException;
 import com.ftnam.image_ai_backend.exception.ErrorCode;
 import com.ftnam.image_ai_backend.repository.PlanInfoRepository;
 import com.ftnam.image_ai_backend.repository.UserRepository;
+import com.ftnam.image_ai_backend.service.impl.NotificationPublisher;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +29,7 @@ import java.util.Map;
 public class CreditResetScheduler {
     UserRepository userRepository;
     PlanInfoRepository planInfoRepository;
+    NotificationPublisher notificationPublisher;
 
     KafkaTemplate<String,Object> kafkaTemplate;
 
@@ -59,6 +61,9 @@ public class CreditResetScheduler {
 
                 kafkaTemplate.send("email-delivery", emailEvent);
 
+                notificationPublisher.sendNotification(user.getId(),
+                        "Your subscription plan has expired, Please renew to continue using.");
+
                 log.info("Subscription plan of user {} expired,reset free plan", user.getEmail());
             }
 
@@ -73,6 +78,10 @@ public class CreditResetScheduler {
                 user.setCredit(newCredit);
                 user.setCreditResetAt(LocalDateTime.now());
                 changed = true;
+
+                notificationPublisher.sendNotification(user.getId(),
+                        "You have received " + planInfo.getWeeklyCredit() +  " credits. Start analyzing your images!");
+
                 log.info("Reset credit of user {} sccessfully", user.getEmail());
             }
 

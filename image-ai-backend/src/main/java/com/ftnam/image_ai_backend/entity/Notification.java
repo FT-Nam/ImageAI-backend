@@ -23,6 +23,7 @@ public class Notification {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(length = 500)
     String content;
 
     @Column(name = "is_read")

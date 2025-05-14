@@ -23,7 +23,8 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    private final String[] PUBLIC_ENDPOINT = {"/user/**", "/auth/**", "/analyze/**", "/file/**", "/payment/vnpay/return-url"};
+    private final String[] PUBLIC_ENDPOINT = {"/user/**", "/auth/**", "/analyze/**"
+            , "/file/**", "/payment/vnpay/return-url", "/ws/**"};
 
     @Autowired
     private CustomJwtDecoder customJwtDecoder;

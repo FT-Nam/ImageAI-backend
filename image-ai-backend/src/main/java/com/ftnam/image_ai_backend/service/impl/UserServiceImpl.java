@@ -4,15 +4,18 @@ import com.ftnam.image_ai_backend.dto.event.EmailEvent;
 import com.ftnam.image_ai_backend.dto.request.UserCreationRequest;
 import com.ftnam.image_ai_backend.dto.request.UserUpdateRequest;
 import com.ftnam.image_ai_backend.dto.response.UserResponse;
+import com.ftnam.image_ai_backend.entity.Notification;
 import com.ftnam.image_ai_backend.entity.Role;
 import com.ftnam.image_ai_backend.entity.User;
 import com.ftnam.image_ai_backend.enums.SubscriptionPlan;
 import com.ftnam.image_ai_backend.exception.AppException;
 import com.ftnam.image_ai_backend.exception.ErrorCode;
 import com.ftnam.image_ai_backend.mapper.UserMapper;
+import com.ftnam.image_ai_backend.repository.NotificationRepository;
 import com.ftnam.image_ai_backend.repository.RoleRepository;
 import com.ftnam.image_ai_backend.repository.UserRepository;
 import com.ftnam.image_ai_backend.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,6 +39,8 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+    NotificationRepository notificationRepository;
+    NotificationPublisher notificationPublisher;
     KafkaTemplate<String,Object> kafkaTemplate;
 
     @Value("${brevo.api-key}")
@@ -44,6 +49,7 @@ public class UserServiceImpl implements UserService {
 
     int creditInitial = 200;
 
+    @Transactional
     @Override
     public UserResponse createUser(UserCreationRequest request) {
         User user = userMapper.toUser(request);
@@ -67,6 +73,13 @@ public class UserServiceImpl implements UserService {
 
         kafkaTemplate.send("email-delivery", emailEvent);
 
+        Notification notification = Notification.builder()
+                .content("Welcome aboard! Your account has been created successfully.")
+                .user(user)
+                .build();
+
+        notificationRepository.save(notification);
+
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
@@ -88,8 +101,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.ID_NOT_EXISTED));
         userMapper.updateUser(user, request);
 
-        String password = passwordEncoder.encode(request.getPassword());
-        user.setPassword(password);
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
+            user.setPassword(encodedPassword);
+        }
+
+        notificationPublisher.sendNotification(user.getId(), "Your profile has been update successfully");
+
         return userMapper.toUserResponse(userRepository.save(user));
     }
 

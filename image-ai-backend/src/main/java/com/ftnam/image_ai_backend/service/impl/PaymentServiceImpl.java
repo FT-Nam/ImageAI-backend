@@ -40,6 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
     UserRepository userRepository;
     OrderRepository orderRepository;
     PlanInfoRepository planInfoRepository;
+    NotificationPublisher notificationPublisher;
 
     KafkaTemplate<String,Object> kafkaTemplate;
 
@@ -317,6 +318,11 @@ public class PaymentServiceImpl implements PaymentService {
 
                 kafkaTemplate.send("email-delivery", emailEvent);
 
+                notificationPublisher.sendNotification(user.getId(),
+                        "Payment successful! Subscription " + user.getSubscription().toString() + " is now active.");
+
+                notificationPublisher.sendNotification(user.getId(),
+                        "You have received " + planInfo.getWeeklyCredit() +  " credits. Start analyzing your images!");
 
                 return PaymentReturnResponse.builder()
                         .success(true)
@@ -329,8 +335,12 @@ public class PaymentServiceImpl implements PaymentService {
                 Order order = orderRepository.findById(orderCode)
                         .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
 
+                User user = order.getUser();
                 order.setStatus(OrderStatus.FAILED);
                 orderRepository.save(order);
+
+                notificationPublisher.sendNotification(user.getId(),
+                        "Payment failed!! Please try again later or contact support.");
 
                 return PaymentReturnResponse.builder()
                         .success(false)
