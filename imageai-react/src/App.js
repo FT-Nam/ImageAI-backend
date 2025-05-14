@@ -27,7 +27,6 @@ function App() {
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/failed" element={<PaymentFailed />} />
             <Route path="/payment/return" element={<PaymentReturn />} />
-            <Route path="/api/v1/payment/vnpay/return-url" element={<PaymentReturn />} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

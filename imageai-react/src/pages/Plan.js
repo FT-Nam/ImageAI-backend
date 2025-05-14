@@ -51,76 +51,26 @@ const Plan = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
+    loadCurrentPlan();
+  }, []);
 
-    const fetchUserData = async () => {
-      if (isLoggedIn && user && !currentPlan) {
-        try {
-          const response = await userAPI.getUserById(user.id);
-          console.log("API Response:", response); // Debug log
-          
-          if (isMounted && response?.data?.value) {
-            const userInfo = response.data.value;
-            console.log("👤 User info:", userInfo);
-            console.log("📦 User subscription:", userInfo.subscription);
-            setCurrentPlan(userInfo.subscription);
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      }
-      if (isMounted) {
+  const loadCurrentPlan = async () => {
+    try {
+      if (!isLoggedIn) {
         setLoading(false);
+        return;
       }
-    };
 
-    fetchUserData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isLoggedIn, user?.id, currentPlan]);
-
-  useEffect(() => {
-    const handlePaymentReturn = async () => {
-      try {
-        // Get URL parameters
-        const searchParams = new URLSearchParams(window.location.search);
-        const vnpResponseCode = searchParams.get('vnp_ResponseCode');
-        const vnpTransactionStatus = searchParams.get('vnp_TransactionStatus');
-        const vnpAmount = searchParams.get('vnp_Amount');
-        const vnpOrderInfo = searchParams.get('vnp_OrderInfo');
-        const vnpTxnRef = searchParams.get('vnp_TxnRef');
-
-        // Call API to verify payment
-        const response = await paymentAPI.paymentReturnUrl({
-          vnp_ResponseCode: vnpResponseCode,
-          vnp_TransactionStatus: vnpTransactionStatus,
-          vnp_Amount: vnpAmount,
-          vnp_OrderInfo: vnpOrderInfo,
-          vnp_TxnRef: vnpTxnRef
-        });
-
-        // Check if payment was successful based on the API response
-        if (response?.data?.code === 1000 && response?.data?.value?.success) {
-          // Redirect to success page
-          navigate('/payment/success');
-        } else {
-          // Redirect to failure page
-          navigate('/payment/fail');
-        }
-      } catch (error) {
-        console.error('Payment return error:', error);
-        // Redirect to failure page on error
-        navigate('/payment/fail');
+      const response = await userAPI.getUserById(user.id);
+      if (response.data && response.data.value) {
+        setCurrentPlan(response.data.value.subscription);
       }
-    };
-
-    // Check if we're on the payment return page
-    if (window.location.pathname === '/payment/return') {
-      handlePaymentReturn();
+    } catch (error) {
+      console.error('Failed to load current plan:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [navigate]);
+  };
 
   const handleClose = () => {
     navigate('/');

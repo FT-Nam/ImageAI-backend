@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { analysisAPI, historyAPI, userAPI } from '../services/api';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 import History from '../components/History';
 import '../styles/home.scss';
 
@@ -28,11 +30,15 @@ const Home = () => {
   const [userCredit, setUserCredit] = useState(0);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [stompClient, setStompClient] = useState(null);
 
   useEffect(() => {
     if (isLoggedIn && token) {
       loadHistory();
       loadUserCredit();
+      loadNotifications();
     }
   }, [isLoggedIn, token]);
 
@@ -88,6 +94,145 @@ const Home = () => {
     }
   }, [token, logout]);
 
+  // Kết nối WebSocket khi component mount
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      
+      // Tạo SockJS instance
+      const socket = new SockJS("http://localhost:8080/api/v1/ws");
+      
+      // Thêm event listeners cho SockJS
+      socket.onopen = () => {
+      };
+      
+      socket.onclose = (event) => {
+      };
+      
+      socket.onerror = (error) => {
+      };
+      
+      // Tạo Stomp client
+      const client = Stomp.over(socket);
+      
+      // Cấu hình client
+      client.debug = (str) => {
+      };
+
+      // Cấu hình heartbeat
+      client.heartbeat.outgoing = 20000; // 20 giây
+      client.heartbeat.incoming = 20000; // 20 giây
+
+      // Thêm token vào header
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      let reconnectAttempts = 0;
+      const maxReconnectAttempts = 5;
+
+      const connectWebSocket = () => {
+        client.connect(headers, 
+          // Success callback
+          () => {
+            console.log('Kết nối WebSocket thành công');
+            reconnectAttempts = 0; // Reset số lần thử kết nối lại
+            
+            // Lấy userId từ token
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              const userId = payload.sub;
+
+              // Subscribe để nhận thông báo realtime
+              const subscription = client.subscribe(`/topic/notifications/${userId}`, (message) => {
+
+                
+                try {
+                  const notification = JSON.parse(message.body);
+                  
+                  // Thêm thông báo mới vào đầu danh sách và sắp xếp lại
+                  setNotifications(prev => {
+                    // Kiểm tra xem thông báo đã tồn tại chưa
+                    const exists = prev.some(n => n.id === notification.id);
+                    if (!exists) {
+                      const newNotifications = [notification, ...prev];
+                      // Sắp xếp lại theo created_at giảm dần
+                      const sortedNotifications = newNotifications.sort((a, b) => {
+                        return new Date(b.created_at) - new Date(a.created_at);
+                      });
+                      return sortedNotifications;
+                    }
+                    return prev;
+                  });
+
+                  // Hiển thị thông báo mới
+                  setShowNotifications(true);
+                } catch (error) {
+                  console.error('Lỗi khi parse thông báo:', error);
+                  console.error('Body message thô:', message.body);
+                }
+              }, {
+                // Thêm headers cho subscription
+                'Authorization': `Bearer ${token}`
+              });
+
+
+              // Test gửi message
+              client.send("/api/v1/ws/test", {
+                'Authorization': `Bearer ${token}`
+              }, JSON.stringify({ 
+                userId: userId,
+                message: "Test kết nối",
+                timestamp: new Date().toISOString()
+              }));
+
+              // Lưu subscription để cleanup
+              setStompClient(client);
+            } else {
+              console.error('Token không hợp lệ');
+            }
+          }, 
+          // Error callback
+          (error) => {
+            console.error('Lỗi kết nối WebSocket:', error);
+            console.error('Headers kết nối:', headers);
+            
+            // Thử kết nối lại nếu chưa vượt quá số lần cho phép
+            if (reconnectAttempts < maxReconnectAttempts) {
+              reconnectAttempts++;
+              console.log(`Đang thử kết nối lại lần ${reconnectAttempts}...`);
+              setTimeout(() => {
+                connectWebSocket();
+              }, 5000);
+            } else {
+              console.error('Đã vượt quá số lần thử kết nối lại cho phép');
+            }
+          }
+        );
+      };
+
+      // Bắt đầu kết nối
+      connectWebSocket();
+
+      // Cleanup khi component unmount
+      return () => {
+        console.log('Component unmount, đang ngắt kết nối WebSocket...');
+        if (client) {
+          client.disconnect();
+        }
+      };
+    } else {
+      console.log('Không khởi động WebSocket - chưa đăng nhập hoặc không có token');
+    }
+  }, [isLoggedIn, token]);
+
+  // Load thông báo khi component mount
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      loadNotifications();
+    }
+  }, [isLoggedIn, token]);
+
   const loadHistory = async () => {
     try {
       if (!token) {
@@ -112,7 +257,11 @@ const Home = () => {
 
       const response = await historyAPI.getHistoryByUser(userId);
       if (response.data && response.data.value) {
-        setHistory(response.data.value);
+        // Sắp xếp history theo created_at giảm dần
+        const sortedHistory = response.data.value.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        setHistory(sortedHistory);
       }
     } catch (error) {
       console.error('Failed to load history:', error);
@@ -142,6 +291,80 @@ const Home = () => {
       }
     } catch (error) {
       console.error('Failed to load user credit:', error);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const userId = payload.sub;
+
+        const response = await fetch(`http://localhost:8080/api/v1/notification/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+        if (data && data.value) {
+          // Sắp xếp notifications theo created_at giảm dần
+          const sortedNotifications = data.value.sort((a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+          });
+          setNotifications(sortedNotifications);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await fetch(`http://localhost:8080/api/v1/notification/${notificationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId
+            ? { ...notification, is_read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unreadNotifications = notifications.filter(n => !n.is_read);
+      await Promise.all(
+        unreadNotifications.map(notification =>
+          fetch(`http://localhost:8080/api/v1/notification/${notification.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        )
+      );
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(notification => ({ ...notification, is_read: true }))
+      );
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
     }
   };
 
@@ -193,7 +416,6 @@ const Home = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      console.log('Sending file:', file.name);
 
       // Lấy thông tin user từ API nếu đã đăng nhập
       let userSubscription = 'FREE';
@@ -207,7 +429,6 @@ const Home = () => {
               const userResponse = await userAPI.getUserById(userId);
               if (userResponse.data && userResponse.data.value) {
                 userSubscription = userResponse.data.value.subscription;
-                console.log('User subscription from API:', userSubscription);
               }
             }
           }
@@ -229,18 +450,13 @@ const Home = () => {
         delayTime = 15000; // 15 giây cho user chưa đăng nhập
       }
 
-      console.log('Selected delay time:', delayTime, 'ms');
 
       // Thêm delay nếu có
       if (delayTime > 0) {
-        console.log('Starting delay for', delayTime, 'ms');
         await new Promise(resolve => setTimeout(resolve, delayTime));
-        console.log('Delay completed');
       }
 
-      console.log('Calling analyze API...');
       const response = await analysisAPI.analyzeImage(formData);
-      console.log('Response:', response.data);
 
       const data = response.data.value;
       setAnimalName(`Tên loài: ${data.prediction}`);
@@ -268,7 +484,6 @@ const Home = () => {
   };
 
   const handleHistorySelect = (item) => {
-    console.log('Selected history item:', item); // Debug log
     setSelectedImage(item.image_url);
     setResult(item.result);
     setConfidence(item.confident);
@@ -335,13 +550,72 @@ const Home = () => {
   return (
     <div className="main-container">
       {isLoggedIn && (
-        <div className="credit-display">
-          <div className="credit-content">
-            <img src="/icons/credit.svg" alt="Credit" className="credit-icon" />
-            <span className="credit-value">{userCredit}</span>
-            <span className="credit-label">Credit</span>
+        <>
+          <div className="credit-display">
+            <div className="credit-content">
+              <img src="/icons/credit.svg" alt="Credit" className="credit-icon" />
+              <span className="credit-value">{userCredit}</span>
+              <span className="credit-label">Credit</span>
+            </div>
           </div>
-        </div>
+
+          <div className="notification-container">
+            <div 
+              className="notification-icon" 
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <img src="/icons/notification.svg" alt="Notification" />
+              {notifications.some(n => !n.is_read) && (
+                <span className="notification-badge"></span>
+              )}
+            </div>
+            
+            {showNotifications && (
+              <div className="notification-dropdown">
+                <div className="notification-header">
+                  <h3>Thông báo</h3>
+                  {notifications.some(n => !n.is_read) && (
+                    <button 
+                      className="mark-all-read"
+                      onClick={handleMarkAllAsRead}
+                    >
+                      Đánh dấu đã đọc
+                    </button>
+                  )}
+                </div>
+                <div className="notification-list">
+                  {notifications.length > 0 ? (
+                    notifications.map(notification => (
+                      <div 
+                        key={notification.id} 
+                        className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                        onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
+                      >
+                        <div className="notification-content">
+                          <p>{notification.content}</p>
+                          <span className="notification-time">
+                            {notification.created_at ? new Date(notification.created_at).toLocaleString('vi-VN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Vừa xong'}
+                          </span>
+                        </div>
+                        {!notification.is_read && <div className="unread-dot"></div>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="notification-empty">
+                      <p>Không có thông báo nào</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <div className={`floating-buttons ${isLoggedIn && isSidebarOpen ? 'hidden' : ''}`} id="floating-buttons">
@@ -397,11 +671,13 @@ const Home = () => {
           </button>
         </div>
         <div className="sidebar-content">
-          <History
-            history={history}
-            onSelectHistory={handleHistorySelect}
-            onDeleteHistory={handleDeleteHistory}
-          />
+          {isLoggedIn && (
+            <History
+              history={history}
+              onSelectHistory={handleHistorySelect}
+              onDeleteHistory={handleDeleteHistory}
+            />
+          )}
         </div>
         <div className="sidebar-footer">
           <a href="/plan" className="upgrade-btn">

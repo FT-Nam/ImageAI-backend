@@ -1069,4 +1069,151 @@ html, body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.notification-container {
+  position: fixed;
+  top: 11px;
+  right: 160px;
+  z-index: 1000;
+
+  .notification-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: #ff4d4f;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+  }
+
+  .notification-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 360px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+
+    .notification-header {
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+      }
+
+      .mark-all-read {
+        background: none;
+        border: none;
+        color: #1890ff;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #e6f7ff;
+        }
+      }
+    }
+
+    .notification-list {
+      max-height: 400px;
+      overflow-y: auto;
+
+      .notification-empty {
+        padding: 32px 16px;
+        text-align: center;
+        color: #999;
+        font-size: 14px;
+      }
+
+      .notification-item {
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+
+        &:hover {
+          background: #fafafa;
+        }
+
+        &.unread {
+          background: #f0f7ff;
+          cursor: pointer;
+
+          &:hover {
+            background: #e6f7ff;
+          }
+        }
+
+        .notification-content {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            color: #333;
+          }
+
+          p {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+          }
+
+          .notification-time {
+            font-size: 12px;
+            color: #999;
+          }
+        }
+
+        .unread-dot {
+          width: 8px;
+          height: 8px;
+          background: #1890ff;
+          border-radius: 50%;
+          margin-top: 6px;
+        }
+      }
+    }
+  }
 } 

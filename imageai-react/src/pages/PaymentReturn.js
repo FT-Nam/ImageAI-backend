@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { paymentAPI } from '../services/api';
 import '../styles/payment.scss';
@@ -7,10 +7,17 @@ const PaymentReturn = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [status, setStatus] = useState('processing');
+  const isProcessing = useRef(false);
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
+      // Kiểm tra nếu đang xử lý thì không xử lý nữa
+      if (isProcessing.current) {
+        return;
+      }
+
       try {
+        isProcessing.current = true;
         // Get URL parameters
         const searchParams = new URLSearchParams(location.search);
         const vnpResponseCode = searchParams.get('vnp_ResponseCode');
@@ -103,6 +110,8 @@ const PaymentReturn = () => {
             }
           });
         }, 2000);
+      } finally {
+        isProcessing.current = false;
       }
     };
 
