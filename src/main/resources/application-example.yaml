@@ -1,0 +1,66 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+app:
+  file:
+    # Thư mục lưu file upload trên máy local (thay đổi tùy môi trường)
+    store-dir: "${APP_FILE_STORE_DIR:/var/app/imageai/uploads}"
+    # Prefix URL để tải file từ backend
+    download-prefix: "${APP_FILE_DOWNLOAD_PREFIX:http://localhost:8080/api/v1/file/download/}"
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "${DB_URL:jdbc:mysql://localhost:3306/imageai}"
+    username: "${DB_USERNAME:root}"
+    password: "${DB_PASSWORD:change-me}"
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  redis:
+    host: "${REDIS_HOST:localhost}"
+    port: ${REDIS_PORT:6379}
+    password: "${REDIS_PASSWORD:}"
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}"
+    consumer:
+      group-id: "${KAFKA_CONSUMER_GROUP:notification-group}"
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+brevo:
+  # API key của email provider – phải đặt qua biến môi trường, không commit key thật
+  api-key: "${BREVO_API_KEY:change-me}"
+
+jwt:
+  # Khóa ký JWT – bắt buộc đặt qua biến môi trường trong môi trường thật
+  signer-key: "${JWT_SIGNER_KEY:change-me}"
+  valid-duration: ${JWT_VALID_DURATION:1800}          # 30 phút
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:604800}  # 7 ngày
+
+vnpay:
+  # Các thông tin sandbox/production nên lấy từ biến môi trường
+  pay-url: "${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}"
+  return-url: "${VNPAY_RETURN_URL:http://localhost:3000/payment/return}"
+  tmn-code: "${VNPAY_TMN_CODE:change-me}"
+  secret-key: "${VNPAY_SECRET_KEY:change-me}"
+  api-url: "${VNPAY_API_URL:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}"
+
+
