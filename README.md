@@ -2,6 +2,9 @@
 
 Image AI Backend is a Spring Boot REST API for AI-powered image analysis with user management, subscriptions, credit management, payments, history tracking, notifications, and email integration.
 
+The corresponding frontend application is available at  
+[`ImageAI-frontend`](https://github.com/FT-Nam/ImageAI-frontend).
+
 ### Table of Contents
 
 - [Tech Stack](#tech-stack)
